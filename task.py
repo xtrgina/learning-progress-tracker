@@ -1,6 +1,5 @@
 import sys
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 
 
@@ -13,7 +12,7 @@ class Student:
 
 class TrackerApplication:
     def __init__(self):
-        self.students = defaultdict(Student)
+        self.students = {}
 
     def execute(self):
         print("Learning progress tracker")
@@ -35,22 +34,9 @@ class TrackerApplication:
         students_added = 0
         print("Enter student credentials or 'back' to return: ")
         while (user_input := input()) != "back":
-            student_info = user_input.split()
-            if len(student_info) < 3:
-                print("Incorrect credentials")
+            if (credentials := self.validate_credentials(user_input.split())) is None:
                 continue
-            first_name = student_info[0]
-            last_name = " ".join(student_info[1:-1])
-            email = student_info[-1]
-            if not self.validate_name(first_name):
-                print("Incorrect first name")
-                continue
-            if not self.validate_name(last_name):
-                print("Incorrect last name")
-                continue
-            if not self.validate_email(email):
-                print("Incorrect email")
-                continue
+            first_name, last_name, email = credentials
             student = Student(first_name, last_name, email)
             self.students[email] = student
             print("The student has been added")
@@ -58,6 +44,24 @@ class TrackerApplication:
         print(
             f"Total {students_added} student{'' if students_added == 1 else 's'} have been added"
         )
+
+    def validate_credentials(self, credentials):
+        if len(credentials) < 3:
+            print("Incorrect credentials")
+            return None
+        first_name = credentials[0]
+        last_name = " ".join(credentials[1:-1])
+        email = credentials[-1]
+        if not self.validate_name(first_name):
+            print("Incorrect first name")
+            return None
+        if not self.validate_name(last_name):
+            print("Incorrect last name")
+            return None
+        if not self.validate_email(email):
+            print("Incorrect email")
+            return None
+        return first_name, last_name, email
 
     @staticmethod
     def validate_name(name):
