@@ -34,7 +34,8 @@ class TrackerApplication:
         students_added = 0
         print("Enter student credentials or 'back' to return: ")
         while (user_input := input()) != "back":
-            if (credentials := self.validate_credentials(user_input.split())) is None:
+            credentials = self.validate_credentials(user_input.split())
+            if credentials is None:
                 continue
             first_name, last_name, email = credentials
             student = Student(first_name, last_name, email)
