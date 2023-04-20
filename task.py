@@ -80,10 +80,6 @@ class TrackerApplication:
         return pattern.match(email)
 
 
-def main():
+if __name__ == "__main__":
     tracker = TrackerApplication()
     tracker.execute()
-
-
-if __name__ == "__main__":
-    main()
