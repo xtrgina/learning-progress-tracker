@@ -27,6 +27,8 @@ class TrackerApplication:
                     self.add_students()
                 case "back":
                     print("Enter 'exit' to exit the program")
+                case "list":
+                    self.list_students()
                 case _:
                     print("Unknown command!")
         print("Bye!")
@@ -89,6 +91,13 @@ class TrackerApplication:
     def validate_email(email):
         pattern = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         return pattern.match(email)
+
+    def list_students(self):
+        if not self.students:
+            print("No students found")
+        print("Students:")
+        for student_id in self.students:
+            print(student_id)
 
 
 if __name__ == "__main__":
