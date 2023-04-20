@@ -1,6 +1,6 @@
 # fmt: off
 import pytest
-from .task import TrackerApplication
+from .task import TrackerApplication, Student
 
 
 class TestTracker:
@@ -41,3 +41,9 @@ class TestTracker:
         assert not self.tracker.validate_name("O-'Neill")
         assert not self.tracker.validate_name("John S")
         assert not self.tracker.validate_name("Stanisław Oğuz")
+
+class TestStudent():
+    def test_student_id_increment(self):
+        s1 = Student("John", "Doe", "john@doe.com")
+        s2 = Student("Jane", "Doe", "jane@doe.com")
+        assert s2.student_id == s1.student_id + 1

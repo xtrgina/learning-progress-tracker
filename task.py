@@ -1,6 +1,7 @@
 import sys
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from itertools import count
 
 
 @dataclass
@@ -8,6 +9,7 @@ class Student:
     first_name: str
     last_name: str
     email: str
+    student_id: int = field(default_factory=count(10000).__next__)
 
 
 class TrackerApplication:
@@ -38,13 +40,22 @@ class TrackerApplication:
             if credentials is None:
                 continue
             first_name, last_name, email = credentials
+            if self.is_email_taken(email):
+                print("This email is already taken")
+                continue
             student = Student(first_name, last_name, email)
-            self.students[email] = student
+            self.students[student.student_id] = student
             print("The student has been added")
             students_added += 1
         print(
             f"Total {students_added} student{'' if students_added == 1 else 's'} have been added"
         )
+
+    def is_email_taken(self, email):
+        for student in self.students:
+            if student.email == email:
+                return True
+        return False
 
     def validate_credentials(self, credentials):
         if len(credentials) < 3:
