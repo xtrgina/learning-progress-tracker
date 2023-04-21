@@ -9,7 +9,7 @@ class Student:
     first_name: str
     last_name: str
     email: str
-    student_id: int = field(default_factory=count(10000).__next__)
+    student_id: int = field(default_factory=count(1000).__next__)
 
 
 @dataclass
@@ -22,6 +22,9 @@ class Course:
             self.student_records[student_id] += points
         else:
             self.student_records[student_id] = points
+
+    def get_points_by_student_id(self, student_id: int) -> int:
+        return self.student_records[student_id]
 
 
 class TrackerApplication:
@@ -47,6 +50,8 @@ class TrackerApplication:
                     self.add_points()
                 case "back":
                     print("Enter 'exit' to exit the program")
+                case "find":
+                    self.find_student()
                 case "list":
                     self.list_students()
                 case _:
@@ -135,18 +140,13 @@ class TrackerApplication:
         if len(input_fields) != 5:
             print("Incorrect points format")
             return None
-        try:
-            student_id = int(input_fields[0])
-        except ValueError:
-            print(f"No student is found for id={input_fields[0]}")
+        student_id = self.validate_student_id(input_fields[0])
+        if student_id is None:
             return None
         try:
             points = [int(x) for x in input_fields[1:5]]
         except ValueError:
             print("Incorrect points format")
-            return None
-        if student_id not in self.students:
-            print(f"No student is found for id={student_id}")
             return None
         for number in points:
             if number < 0:
@@ -154,9 +154,32 @@ class TrackerApplication:
                 return None
         return student_id, points
 
+    def validate_student_id(self, input_id):
+        try:
+            student_id = int(input_id)
+        except ValueError:
+            print(f"No student is found for id={input_id}")
+            return None
+        if student_id not in self.students:
+            print(f"No student is found for id={input_id}")
+            return None
+        return student_id
+
     def update_course_record(self, course_name, student_id, points):
         course = self.courses[course_name]
         course.update_student_record(student_id, points)
+
+    def find_student(self):
+        print("Enter an id or 'back' to return: ")
+        while (user_input := input()) != "back":
+            student_id = self.validate_student_id(user_input)
+            if student_id is None:
+                continue
+            course_info = []
+            for course_name, course in self.courses.items():
+                points = course.get_points_by_student_id(student_id)
+                course_info.append(f"{course_name}={points}")
+            print(f"{student_id} points: {'; '.join(course_info)}")
 
 
 if __name__ == "__main__":
