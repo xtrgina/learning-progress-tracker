@@ -37,12 +37,16 @@ class Course:
         return student_data
 
     def average_points_per_submission(self):
+        if not self.submissions:
+            return 0
         return fmean(self.submissions)
 
     def total_number_of_submissions(self):
         return len(self.submissions)
 
     def get_points_by_student_id(self, student_id: int) -> int:
+        if student_id not in self.student_records:
+            return 0
         return self.student_records[student_id]
 
     def get_enrolled_count(self):
@@ -205,14 +209,88 @@ class TrackerApplication:
                 course_info.append(f"{course_name}={points}")
             print(f"{student_id} points: {'; '.join(course_info)}")
 
+    def get_most_and_least_popular_courses(self):
+        courses = list(self.courses.values())
+        courses.sort(key=lambda x: x.get_enrolled_count(), reverse=True)
+
+        highest = courses[0].get_enrolled_count()
+        lowest = courses[-1].get_enrolled_count()
+        most_popular = [
+            course.name for course in courses if course.get_enrolled_count() == highest
+        ]
+        least_popular = [
+            course.name
+            for course in courses
+            if course.get_enrolled_count() == lowest and course.name not in most_popular
+        ]
+
+        if highest == 0:
+            return "n/a", "n/a"
+        if not least_popular:
+            return ", ".join(most_popular), "n/a"
+
+        return ", ".join(most_popular), ", ".join(least_popular)
+
+    def get_most_and_least_active_courses(self):
+        courses = list(self.courses.values())
+        courses.sort(key=lambda x: x.total_number_of_submissions(), reverse=True)
+        highest = courses[0].total_number_of_submissions()
+        lowest = courses[-1].total_number_of_submissions()
+        most_active = [
+            course.name
+            for course in courses
+            if course.total_number_of_submissions() == highest
+        ]
+        least_active = [
+            course.name
+            for course in courses
+            if course.total_number_of_submissions() == lowest
+            and course.name not in most_active
+        ]
+
+        if highest == 0:
+            return "n/a", "n/a"
+        if not least_active:
+            return ", ".join(most_active), "n/a"
+
+        return ", ".join(most_active), ", ".join(least_active)
+
+    def get_easiest_and_hardest_courses(self):
+        courses = list(self.courses.values())
+        courses.sort(key=lambda x: x.average_points_per_submission(), reverse=True)
+        highest = courses[0].average_points_per_submission()
+        lowest = courses[-1].average_points_per_submission()
+        easiest = [
+            course.name
+            for course in courses
+            if course.average_points_per_submission() == highest
+        ]
+        hardest = [
+            course.name
+            for course in courses
+            if course.average_points_per_submission() == lowest
+            and course.name not in easiest
+        ]
+
+        if highest == 0:
+            return "n/a", "n/a"
+
+        if not hardest:
+            return ", ".join(easiest), "n/a"
+
+        return ", ".join(easiest), ", ".join(hardest)
+
     def statistics(self):
+        most_popular, least_popular = self.get_most_and_least_popular_courses()
+        most_active, least_active = self.get_most_and_least_active_courses()
+        easiest, hardest = self.get_easiest_and_hardest_courses()
         print("Type the name of a course to see details or 'back' to quit:")
-        print("Most popular: n/a")
-        print("Least popular: n/a")
-        print("Highest activity: n/a")
-        print("Lowest activity: n/a")
-        print("Easiest course: n/a")
-        print("Hardest course: n/a")
+        print(f"Most popular: {most_popular}")
+        print(f"Least popular: {least_popular}")
+        print(f"Highest activity: {most_active}")
+        print(f"Lowest activity: {least_active}")
+        print(f"Easiest course: {easiest}")
+        print(f"Hardest course: {hardest}")
         while (course_name := input().lower().strip()) != "back":
             if course_name not in self.courses:
                 print("Unknown course")
