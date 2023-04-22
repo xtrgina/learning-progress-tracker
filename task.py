@@ -29,28 +29,28 @@ class Course:
             self.student_records[student_id] = points
         self.submissions.append(points)
 
-    def get_student_data(self):
-        student_data = []
+    def get_student_progress(self) -> list:
+        student_progress = []
         for student_id, points in self.student_records.items():
-            completed_percentage = f"{(points/self.pass_requirement)*100:.1f}%"
-            student_data.append((student_id, points, completed_percentage))
-        return student_data
+            completed_percentage = f"{(points / self.pass_requirement) * 100:.1f}%"
+            student_progress.append((student_id, points, completed_percentage))
+        return student_progress
 
-    def average_points_per_submission(self):
+    def average_points_per_submission(self) -> float:
         if not self.submissions:
             return 0
         return fmean(self.submissions)
 
-    def total_number_of_submissions(self):
+    def total_number_of_submissions(self) -> int:
         return len(self.submissions)
 
-    def get_points_by_student_id(self, student_id: int) -> int:
+    def points_by_student(self, student_id: int) -> int:
         if student_id not in self.student_records:
             return 0
         return self.student_records[student_id]
 
-    def get_enrolled_count(self):
-        return len([p for p in self.student_records.values() if p > 0])
+    def enrolled_count(self) -> int:
+        return len(self.student_records)
 
 
 class TrackerApplication:
@@ -157,6 +157,7 @@ class TrackerApplication:
         while (user_input := input()) != "back":
             validated_input = self.validate_points_string(user_input)
             if validated_input is None:
+                print("Incorrect points format")
                 continue
             student_id, points = validated_input
             for index, course_name in enumerate(self.courses):
@@ -166,7 +167,6 @@ class TrackerApplication:
     def validate_points_string(self, user_input):
         input_fields = user_input.split()
         if len(input_fields) != 5:
-            print("Incorrect points format")
             return None
         student_id = self.validate_student_id(input_fields[0])
         if student_id is None:
@@ -174,11 +174,9 @@ class TrackerApplication:
         try:
             points = [int(x) for x in input_fields[1:5]]
         except ValueError:
-            print("Incorrect points format")
             return None
         for number in points:
             if number < 0:
-                print("Incorrect points format")
                 return None
         return student_id, points
 
@@ -205,23 +203,40 @@ class TrackerApplication:
                 continue
             course_info = []
             for course_name, course in self.courses.items():
-                points = course.get_points_by_student_id(student_id)
+                points = course.points_by_student(student_id)
                 course_info.append(f"{course_name}={points}")
             print(f"{student_id} points: {'; '.join(course_info)}")
 
-    def get_most_and_least_popular_courses(self):
-        courses = list(self.courses.values())
-        courses.sort(key=lambda x: x.get_enrolled_count(), reverse=True)
+    def statistics(self):
+        most_popular, least_popular = self.most_and_least_popular_courses()
+        most_active, least_active = self.most_and_least_active_courses()
+        easiest, hardest = self.easiest_and_hardest_courses()
+        print("Type the name of a course to see details or 'back' to quit:")
+        print(f"Most popular: {most_popular}")
+        print(f"Least popular: {least_popular}")
+        print(f"Highest activity: {most_active}")
+        print(f"Lowest activity: {least_active}")
+        print(f"Easiest course: {easiest}")
+        print(f"Hardest course: {hardest}")
+        while (course_name := input().lower().strip()) != "back":
+            if course_name not in self.courses:
+                print("Unknown course")
+                continue
+            self.display_course_statistics(course_name)
 
-        highest = courses[0].get_enrolled_count()
-        lowest = courses[-1].get_enrolled_count()
+    def most_and_least_popular_courses(self):
+        courses = list(self.courses.values())
+        courses.sort(key=lambda x: x.enrolled_count(), reverse=True)
+
+        highest = courses[0].enrolled_count()
+        lowest = courses[-1].enrolled_count()
         most_popular = [
-            course.name for course in courses if course.get_enrolled_count() == highest
+            course.name for course in courses if course.enrolled_count() == highest
         ]
         least_popular = [
             course.name
             for course in courses
-            if course.get_enrolled_count() == lowest and course.name not in most_popular
+            if course.enrolled_count() == lowest and course.name not in most_popular
         ]
 
         if highest == 0:
@@ -231,7 +246,7 @@ class TrackerApplication:
 
         return ", ".join(most_popular), ", ".join(least_popular)
 
-    def get_most_and_least_active_courses(self):
+    def most_and_least_active_courses(self):
         courses = list(self.courses.values())
         courses.sort(key=lambda x: x.total_number_of_submissions(), reverse=True)
         highest = courses[0].total_number_of_submissions()
@@ -255,7 +270,7 @@ class TrackerApplication:
 
         return ", ".join(most_active), ", ".join(least_active)
 
-    def get_easiest_and_hardest_courses(self):
+    def easiest_and_hardest_courses(self):
         courses = list(self.courses.values())
         courses.sort(key=lambda x: x.average_points_per_submission(), reverse=True)
         highest = courses[0].average_points_per_submission()
@@ -274,35 +289,17 @@ class TrackerApplication:
 
         if highest == 0:
             return "n/a", "n/a"
-
         if not hardest:
             return ", ".join(easiest), "n/a"
 
         return ", ".join(easiest), ", ".join(hardest)
-
-    def statistics(self):
-        most_popular, least_popular = self.get_most_and_least_popular_courses()
-        most_active, least_active = self.get_most_and_least_active_courses()
-        easiest, hardest = self.get_easiest_and_hardest_courses()
-        print("Type the name of a course to see details or 'back' to quit:")
-        print(f"Most popular: {most_popular}")
-        print(f"Least popular: {least_popular}")
-        print(f"Highest activity: {most_active}")
-        print(f"Lowest activity: {least_active}")
-        print(f"Easiest course: {easiest}")
-        print(f"Hardest course: {hardest}")
-        while (course_name := input().lower().strip()) != "back":
-            if course_name not in self.courses:
-                print("Unknown course")
-                continue
-            self.display_course_statistics(course_name)
 
     def display_course_statistics(self, course_name):
         course = self.courses[course_name]
         print(course.name)
         print(f"{'id':<8}{'points':<10}completed")
         student_statistics = sorted(
-            course.get_student_data(),
+            course.get_student_progress(),
             key=lambda data: (data[1], -data[0]),
             reverse=True,
         )
