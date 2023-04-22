@@ -12,6 +12,9 @@ class Student:
     email: str
     student_id: int = field(default_factory=count(1000).__next__)
 
+    def full_name(self):
+        return " ".join((self.first_name, self.last_name))
+
 
 @dataclass
 class Course:
@@ -52,9 +55,13 @@ class Course:
     def enrolled_count(self) -> int:
         return len(self.student_records)
 
+    def did_pass(self, student_id: int) -> bool:
+        return self.points_by_student(student_id) >= self.pass_requirement
+
 
 class TrackerApplication:
     def __init__(self):
+        self.notified = set()
         self.students = {}
         self.courses = {
             "python": Course("Python", 600),
@@ -65,7 +72,8 @@ class TrackerApplication:
 
     def execute(self):
         print("Learning progress tracker")
-        while (command := input().strip()) != "exit":
+        while True:
+            command = input().strip()
             if not command:
                 print("No input")
                 continue
@@ -76,16 +84,19 @@ class TrackerApplication:
                     self.add_points()
                 case "back":
                     print("Enter 'exit' to exit the program")
+                case "exit":
+                    print("Bye!")
+                    sys.exit()
                 case "find":
                     self.find_student()
                 case "list":
                     self.list_students()
+                case "notify":
+                    self.notify_students()
                 case "statistics":
                     self.statistics()
                 case _:
                     print("Unknown command!")
-        print("Bye!")
-        sys.exit()
 
     def add_students(self):
         students_added = 0
@@ -305,6 +316,23 @@ class TrackerApplication:
         )
         for student_id, points, completed in student_statistics:
             print(f"{student_id:<8d}{points:<10d}{completed}")
+
+    def notify_students(self):
+        notify_data = [
+            (student.email, student.full_name(), course.name)
+            for student in self.students.values()
+            for course in self.courses.values()
+            if course.did_pass(student.student_id)
+            and (student.email, course.name) not in self.notified
+        ]
+        distinct_emails = set()
+        for email, name, course_name in notify_data:
+            print(f"To: {email}")
+            print(f"Re: Your Learning Progress")
+            print(f"Hello, {name}! You have accomplished our {course_name} course!")
+            distinct_emails.add(email)
+            self.notified.add((email, course_name))
+        print(f"Total {len(distinct_emails)} students have been notified.")
 
 
 if __name__ == "__main__":
